@@ -1,0 +1,7 @@
+lightning
+numpy
+torch
+torchvision
+torchmetrics
+p-utils
+p-structures
