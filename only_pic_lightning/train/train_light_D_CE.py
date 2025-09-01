@@ -1,25 +1,7 @@
 import lightning as L
-from model_lightning import MyModel
+from General.model_lightning import MyModel
 from dataloader import get_loaders_transform
 from lightning.pytorch.callbacks import EarlyStopping
-
-class ModelOpts:
-    def __init__(self, name):
-        self.name = name
-
-class LossOpts:
-    def __init__(self, name):
-        self.name = name
-
-class TrainPar:
-    def __init__(self, loss_name):
-        self.eval_threshold = 0.5
-        self.loss_opts = LossOpts(loss_name)
-        self.lr = 1e-4
-
-import lightning as L
-from model_lightning import MyModel
-from dataloader import get_loaders_transform
 
 class ModelOpts:
     def __init__(self, name):
@@ -56,7 +38,7 @@ trainer = L.Trainer(
     devices=1,
     log_every_n_steps=10,
     default_root_dir="lightning_logs_densenet_CE",
-    callbacks=[early_stop]    # <-- Ajout ici
+    callbacks=[early_stop]    
 )
 
 trainer.fit(model, train_loader, val_loader)
