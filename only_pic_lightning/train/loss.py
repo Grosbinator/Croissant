@@ -105,6 +105,12 @@ def CrossEntropyLoss(y_hat, y):
     ce_loss = F.cross_entropy(y_hat, y)
     return ce_loss
 
+def BinaryCrossEntropyLoss(y_hat, y):
+    """
+    Wrapper pour torch.nn.functional.binary_cross_entropy.
+    Utilise des probabilités (après sigmoid).
+    """
+    return F.binary_cross_entropy(y_hat, y)
 
 # def NLLLoss(y_hat, y):
 #     # loss = torch.nn.NLLLoss()

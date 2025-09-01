@@ -19,7 +19,7 @@ class TrainPar:
 
 # Utilisation de DenseNet et CrossEntropyLoss
 model_opts = ModelOpts(name="mvsadensenet")
-train_par = TrainPar("CrossEntropyLoss")
+train_par = TrainPar("BinaryCrossEntropyLoss")
 
 train_loader, val_loader, test_loader = get_loaders_transform(batch_size=16, shuffle=True)
 model = MyModel(model_opts, train_par)

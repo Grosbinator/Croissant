@@ -60,7 +60,6 @@ class MyModel(L.LightningModule):
         return self.model(x)
 
     def get_loss(self, pred, label):
-        # Seleccionar la pérdida según la configuración
         if self.loss_name == "BCELogitsLoss":
             return BCELogitsLoss(pred, label)
         elif self.loss_name == "FocalLoss":
@@ -71,6 +70,14 @@ class MyModel(L.LightningModule):
             loss_fn = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
             label = label.long()
             return loss_fn(pred, label)
+        elif self.loss_name == "BinaryCrossEntropyLoss":
+            from loss import BinaryCrossEntropyLoss
+            # Si pred.shape = [batch_size, 2], il faut prendre la colonne 1 (proba positive)
+            if pred.shape[1] == 2:
+                pred = torch.softmax(pred, dim=1)[:, 1]
+            # S'assurer que label est float et de même shape que pred
+            label = label.float()
+            return BinaryCrossEntropyLoss(pred, label)
         else:
             raise ValueError(f"Loss {self.loss_name} is not supported")
 
@@ -97,6 +104,14 @@ class MyModel(L.LightningModule):
         img, label = batch
         pred = self(img)
         loss = self.get_loss(pred, label)
+
+        # Collecte pour la matrice de confusion
+        if not hasattr(self, "all_test_preds"):
+            self.all_test_preds = []
+            self.all_test_labels = []
+        self.all_test_preds.extend(pred.argmax(dim=1).cpu().numpy())
+        self.all_test_labels.extend(label.cpu().numpy())
+
         self.log('test_loss', loss)
         self.log('test_accuracy', self.test_accuracy(pred, label), batch_size=label.size(0))
         self.log('test_recall', self.test_recall(pred, label), batch_size=label.size(0))
