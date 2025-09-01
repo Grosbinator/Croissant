@@ -8,3 +8,5 @@
 *.pyc
 train_lightning.py
 try.ipynb
+*.csv
+*.ckpt
