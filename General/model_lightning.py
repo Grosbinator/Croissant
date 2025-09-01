@@ -4,7 +4,7 @@ from torch import nn
 import torchmetrics
 import numpy as np
 from loss import BCELogitsLoss, FocalLoss  # Update import with folder name
-from models import CustomResnet, CustomMobileNet, Custominceptiont, Custom_densenet, Custom_vgg16  # Update import with folder name
+from models import CustomResnet, CustomMobileNet, Custominceptiont, Custom_densenet, Custom_vgg16, CustomMVSADenseNet, CustomMVSANet, CustomResnet101  # Update import with folder name
 from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassSpecificity
 from collections import defaultdict
 
@@ -25,6 +25,10 @@ class MyModel(L.LightningModule):
             self.model = Custom_densenet()
         elif model_opts.name == "vgg16":
             self.model = Custom_vgg16()
+        elif model_opts.name == "mvsa":
+            self.model = CustomMVSANet()
+        elif model_opts.name == "mvsadensenet":
+            self.model = CustomMVSADenseNet()
         else:
             raise ValueError(f"Modelo no soportado: {model_opts.name}")
 

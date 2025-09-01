@@ -3,6 +3,8 @@ import torch.nn as nn
 import torchvision.models as models
 import pandas as pd
 
+from only_pic_lightning.train.models import CustomResnet101
+
 class CustomResnet(nn.Module):
     def __init__(self):
         super(CustomResnet, self).__init__()
@@ -122,39 +124,83 @@ class Custom_vgg16(nn.Module):
         x = self.fc3(x)
         return x
 
-class PyTorchCNN(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.block1 = torch.nn.Sequential(
-            torch.nn.Conv2d(3, 3, kernel_size=3),
-            torch.nn.BatchNorm2d(3),
-            torch.nn.ReLU(),
-            torch.nn.MaxPool2d(kernel_size=2),
+class CustomMVSANet(nn.Module):
+    def __init__(self, out_features=1):
+        super(CustomMVSANet, self).__init__()
+        # Exemple : on utilise resnet50 comme backbone et on ajoute une couche d'attention simple
+        self.base_model = models.resnet50(pretrained=True)
+        self.features = nn.Sequential(*list(self.base_model.children())[:-1])
+        self.fc1 = nn.Linear(2048, 128)
+        self.attention = nn.Sequential(
+            nn.Linear(128, 128),
+            nn.Sigmoid()
         )
-        self.block2 = torch.nn.Sequential(
-            torch.nn.Conv2d(3, 16, kernel_size=3),
-            torch.nn.BatchNorm2d(16),
-            torch.nn.ReLU(),
-            torch.nn.MaxPool2d(kernel_size=2), 
-        )
-        self.block3 = torch.nn.Sequential(
-            torch.nn.Conv2d(16, 32, kernel_size=3),
-            torch.nn.BatchNorm2d(32),
-            torch.nn.ReLU(),
-            torch.nn.MaxPool2d(kernel_size=2), 
-        )
-        self.fc_layers = torch.nn.Sequential(
-            torch.nn.Linear(39200, 20),
-            torch.nn.BatchNorm1d(20),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.5),
-            torch.nn.Linear(20, 1)  # 1 sortie
-        )
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, out_features)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.4)
+        self.dropout2 = nn.Dropout(0.2)
 
     def forward(self, x):
-        x = self.block1(x)
-        x = self.block2(x)
-        x = self.block3(x)
-        x = torch.flatten(x, start_dim=1)
-        logits = self.fc_layers(x)
-        return logits
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.relu(self.fc1(x))
+        attn = self.attention(x)
+        x = x * attn  # MVSA: attention multiplicative
+        x = self.dropout(x)
+        x = self.relu(self.fc2(x))
+        x = self.dropout2(x)
+        x = self.fc3(x)
+        return x
+     
+class CustomMVSADenseNet(nn.Module):
+    def __init__(self, out_features=1):
+        super(CustomMVSADenseNet, self).__init__()
+        # Utilise DenseNet121 comme backbone
+        self.base_model = models.densenet121(pretrained=True).features
+        self.gap = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc1 = nn.Linear(1024, 128)
+        self.attention = nn.Sequential(
+            nn.Linear(128, 128),
+            nn.Sigmoid()
+        )
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, out_features)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.4)
+        self.dropout2 = nn.Dropout(0.2)
+
+    def forward(self, x):
+        x = self.base_model(x)
+        x = self.gap(x)
+        x = x.view(x.size(0), -1)
+        x = self.relu(self.fc1(x))
+        attn = self.attention(x)
+        x = x * attn  # MVSA: attention multiplicative
+        x = self.dropout(x)
+        x = self.relu(self.fc2(x))
+        x = self.dropout2(x)
+        x = self.fc3(x)
+        return x
+    
+    class CustomResnet101(nn.Module):
+        def __init__(self):
+            super(CustomResnet101, self).__init__()
+            self.base_model = models.resnet101(pretrained=True)
+            self.features = nn.Sequential(*list(self.base_model.children())[:-1])
+            self.fc1 = nn.Linear(2048, 128)
+            self.fc2 = nn.Linear(128, 64)
+            self.fc3 = nn.Linear(64, 1)
+            self.relu = nn.ReLU()
+            self.dropout = nn.Dropout(0.4)
+            self.dropout2 = nn.Dropout(0.2)
+
+        def forward(self, x):
+            x = self.features(x)
+            x = x.view(x.size(0), -1)
+            x = self.relu(self.fc1(x))
+            x = self.dropout(x)
+            x = self.relu(self.fc2(x))
+            x = self.dropout2(x)
+            x = self.fc3(x)
+            return x
