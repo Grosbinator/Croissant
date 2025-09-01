@@ -3,8 +3,8 @@ import torch
 from torch import nn
 import torchmetrics
 import numpy as np
-from loss import BCELogitsLoss, FocalLoss  # Update import with folder name
-from models import CustomResnet, CustomMobileNet, Custominceptiont, Custom_densenet, Custom_vgg16, CustomMVSADenseNet, CustomMVSANet, CustomResnet101  # Update import with folder name
+from General.loss import BCELogitsLoss, FocalLoss
+from General.models import CustomResnet, CustomMobileNet, Custominceptiont, Custom_densenet, Custom_vgg16, CustomMVSADenseNet, CustomMVSANet, CustomResnet101
 from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassSpecificity
 from collections import defaultdict
 
@@ -68,7 +68,7 @@ class MyModel(L.LightningModule):
         elif self.loss_name == "CrossEntropyLoss":
             # new approach for 2-class: pred.shape = [batch_size, 2]
             # labels.shape = [batch_size]
-            from loss import CrossEntropyLoss
+            from General.loss import CrossEntropyLoss
             class_weights = torch.FloatTensor([0.9, 1.5]).cuda()  # Ajusta los pesos
             loss_fn = nn.CrossEntropyLoss(weight=class_weights,label_smoothing=0.1)
             return loss_fn(pred, label)
