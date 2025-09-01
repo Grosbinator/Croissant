@@ -5,3 +5,6 @@
 *.bmp
 *.tiff
 *.webp
+*.pyc
+train_lightning.py
+try.ipynb
