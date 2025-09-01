@@ -7,6 +7,7 @@ from loss import BCELogitsLoss, FocalLoss
 from models import CustomResnet, CustomMobileNet, Custominceptiont, Custom_densenet, Custom_vgg16, CustomMVSADenseNet, CustomMVSANet, CustomResnet101
 from torchmetrics.classification import MulticlassAccuracy, MulticlassRecall, MulticlassSpecificity
 from collections import defaultdict
+from sklearn.metrics import confusion_matrix
 
 class MyModel(L.LightningModule):
     def __init__(self, model_opts, train_par):
@@ -100,6 +101,30 @@ class MyModel(L.LightningModule):
         self.log('test_accuracy', self.test_accuracy(pred, label), batch_size=label.size(0))
         self.log('test_recall', self.test_recall(pred, label), batch_size=label.size(0))
         self.log('test_specificity', self.test_specificity(pred, label), batch_size=label.size(0))
+    
+    def on_test_epoch_end(self):
+        y_true = self.all_test_labels
+        y_pred = self.all_test_preds
+        cm = confusion_matrix(y_true, y_pred)
+        print("Matrice de confusion :")
+        print(cm)
+
+        # Calcul des métriques à partir de la matrice de confusion
+        if cm.shape == (2, 2):
+            tn, fp, fn, tp = cm.ravel()
+            accuracy = (tp + tn) / (tp + tn + fp + fn)
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+            specificity = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+
+            print(f"Test Accuracy (from confusion matrix): {accuracy:.4f}")
+            print(f"Test Recall (from confusion matrix): {recall:.4f}")
+            print(f"Test Specificity (from confusion matrix): {specificity:.4f}")
+        else:
+            print("Attention : la matrice de confusion n'est pas 2x2, vérifie le nombre de classes.")
+
+        # Nettoyage pour les prochains tests
+        del self.all_test_preds
+        del self.all_test_labels
 
     def on_validation_epoch_end(self):
         patient_final_predictions = {}
