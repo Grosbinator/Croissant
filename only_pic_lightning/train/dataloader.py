@@ -24,7 +24,7 @@ class OnlyPicDataset(Dataset):
     
 def get_loaders(batch_size=16, shuffle=True):
     image_transform = transforms.Compose([
-        transforms.Resize((299, 299)),
+        transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])

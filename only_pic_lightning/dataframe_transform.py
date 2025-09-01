@@ -5,8 +5,8 @@ import numpy as np
 import os
 
 # Chemins
-csv_path = r"C:\Users\labdsp\Documents\Croissant\only_pic\only_pic.csv"
-aug_dir = r"C:\Users\labdsp\Documents\Croissant\only_pic\augmented"
+csv_path = r"C:\Users\labdsp\Desktop\Croissant_2\Croissant\only_pic_lightning\only_pic.csv"
+aug_dir = r"C:\Users\labdsp\Desktop\Croissant_2\Croissant\only_pic_lightning\augmented"
 os.makedirs(aug_dir, exist_ok=True)
 
 # Charger le CSV
@@ -63,7 +63,7 @@ augment_and_balance(df_1, 1, n_target)
 
 # Fusionner et sauvegarder le nouveau CSV
 df_aug = pd.DataFrame(new_rows)
-df_aug.to_csv(r"C:\Users\labdsp\Documents\Croissant\only_pic_lightning\only_pic_transform_balanced.csv", index=False)
+df_aug.to_csv(r"C:\Users\labdsp\Desktop\Croissant_2\Croissant\only_pic_lightning\only_pic_transform_balanced.csv", index=False)
 
 # 2 transformations : flip horizontal et rotation de 30° 
 # import pandas as pd

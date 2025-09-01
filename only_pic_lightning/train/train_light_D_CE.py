@@ -1,5 +1,5 @@
 import lightning as L
-from General.model_lightning import MyModel
+from model_lightning import MyModel
 from dataloader import get_loaders_transform
 from lightning.pytorch.callbacks import EarlyStopping
 
