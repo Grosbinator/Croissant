@@ -1,5 +1,5 @@
 import lightning as L
-from model_lightning import MyModel
+from General.model_lightning import MyModel
 from dataloader import get_loaders  # adapte le nom si besoin
 import torch
 
