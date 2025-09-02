@@ -52,7 +52,7 @@ def get_dataloaders(batch_size=16, shuffle=True):
         transforms.Resize((299, 299)),
         transforms.ToTensor(),
     ])
-    df = pd.read_csv("/home/dsplab/Robin/image_mask/dataframe/model/dataset_sphericity.csv")    
+    df = pd.read_csv(r"C:\Users\labdsp\Desktop\Croissant_2\Croissant\image_mask\dataset_sphericity.csv")    
     df = df.dropna(subset=['sphericity'])
     df['sphericity'] = df['sphericity'].astype(float)
     train_df, temp_df = train_test_split(df, test_size=0.3, stratify=df['class'], random_state=42)
