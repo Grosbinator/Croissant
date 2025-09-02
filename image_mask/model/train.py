@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-from models import LateFusionModel
+from image_mask.model.LF_models import LateFusionModel
 
 def train(model, train_loader, val_loader, optimizer, criterion, device, num_epochs=10, save_path="best_model.pth"):
     best_val_loss = float("inf")

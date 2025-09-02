@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 import pandas as pd
 from tqdm import tqdm
 from dataloader import ImageDataset, get_dataloaders, show_accuracy_img
-from models import PyTorchCNN, Custominceptiont
+from image_mask.model.LF_models import PyTorchCNN, Custominceptiont
 from sklearn.model_selection import train_test_split
 
 # Charge le DataFrame unique

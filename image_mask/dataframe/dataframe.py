@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from cal_coeff import batch_coefficients2D
 
-base_dir = r"C:\Users\labdsp\Desktop\Croissant_2\Croissant\Dataset_BUSI_with_GT"
+base_dir = r"C:\Users\labdsp\Desktop\Croissant_2\Croissant\image_mask\dataset"
 
 dirs = {
     "benign": {
