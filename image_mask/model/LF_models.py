@@ -205,7 +205,7 @@ class PyTorchCNN(torch.nn.Module):
     
 
 
-class LateFusionModel(nn.Module):
+class LateFusionModel_inceptiont(nn.Module):
     def __init__(self, num_tabular_features=1):
         super().__init__()
         self.cnn = Custominceptiont() 
@@ -230,3 +230,140 @@ class LateFusionModel(nn.Module):
             x_tab = x_tab.view(x_tab.size(0), -1)
         x = torch.cat([x_img, x_tab], dim=1)
         return self.classifier(x).squeeze(-1)
+    
+class LateFusionModel_densenet(nn.Module):
+    def __init__(self, num_tabular_features=1):
+        super().__init__()
+        # Partie CNN (DenseNet)
+        self.cnn = models.densenet121(pretrained=True).features
+        self.gap = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc1 = nn.Linear(1024, 128)
+        self.fc2 = nn.Linear(128, 64)
+        # Partie tabulaire
+        self.tabular = nn.Sequential(
+            nn.Linear(num_tabular_features, 16),
+            nn.ReLU(),
+            nn.Linear(16, 16),
+            nn.ReLU()
+        )
+        # Fusion et classification finale
+        self.classifier = nn.Sequential(
+            nn.Linear(64 + 16, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)  # 1 sortie pour la classification binaire
+        )
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.4)
+        self.dropout2 = nn.Dropout(0.2)
+
+    def forward(self, image, tabular):
+        # Image branch
+        x_img = self.cnn(image)
+        x_img = self.gap(x_img)
+        x_img = x_img.view(x_img.size(0), -1)
+        x_img = self.relu(self.fc1(x_img))
+        x_img = self.dropout(x_img)
+        x_img = self.relu(self.fc2(x_img))
+        x_img = self.dropout2(x_img)
+        # Tabular branch
+        x_tab = self.tabular(tabular)
+        if x_tab.dim() > 2:
+            x_tab = x_tab.view(x_tab.size(0), -1)
+        # Fusion
+        x = torch.cat([x_img, x_tab], dim=1)
+        x = self.classifier(x)
+        return x.squeeze(-1)
+
+class LateFusionModel_CustomMVSANet(nn.Module):
+    def __init__(self, num_tabular_features=1, out_features=1):
+        super().__init__()
+        # Backbone ResNet50
+        self.base_model = models.resnet50(pretrained=True)
+        self.features = nn.Sequential(*list(self.base_model.children())[:-1])
+        self.fc1 = nn.Linear(2048, 128)
+        self.attention = nn.Sequential(
+            nn.Linear(128, 128),
+            nn.Sigmoid()
+        )
+        # Branche tabulaire
+        self.tabular = nn.Sequential(
+            nn.Linear(num_tabular_features, 16),
+            nn.ReLU(),
+            nn.Linear(16, 16),
+            nn.ReLU()
+        )
+        # Fusion et classification finale
+        self.classifier = nn.Sequential(
+            nn.Linear(64 + 16, 64),
+            nn.ReLU(),
+            nn.Linear(64, out_features)
+        )
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.4)
+        self.dropout2 = nn.Dropout(0.2)
+
+    def forward(self, image, tabular):
+        x = self.features(image)
+        x = x.view(x.size(0), -1)
+        x = self.relu(self.fc1(x))
+        attn = self.attention(x)
+        x = x * attn  # MVSA: attention multiplicative
+        x = self.dropout(x)
+        x = self.relu(self.fc2(x))
+        x = self.dropout2(x)
+        # Branche tabulaire
+        x_tab = self.tabular(tabular)
+        if x_tab.dim() > 2:
+            x_tab = x_tab.view(x_tab.size(0), -1)
+        # Fusion
+        x = torch.cat([x, x_tab], dim=1)
+        x = self.classifier(x)
+        return x.squeeze(-1) if x.shape[-1] == 1 else x
+
+class LateFusionModel_CustomMVSADenseNet(nn.Module):
+    def __init__(self, num_tabular_features=1, out_features=2):
+        super().__init__()
+        # Backbone DenseNet121
+        self.base_model = models.densenet121(pretrained=True).features
+        self.gap = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc1 = nn.Linear(1024, 128)
+        self.attention = nn.Sequential(
+            nn.Linear(128, 128),
+            nn.Sigmoid()
+        )
+        self.fc2 = nn.Linear(128, 64)
+        # Branche tabulaire
+        self.tabular = nn.Sequential(
+            nn.Linear(num_tabular_features, 16),
+            nn.ReLU(),
+            nn.Linear(16, 16),
+            nn.ReLU()
+        )
+        # Fusion et classification finale
+        self.classifier = nn.Sequential(
+            nn.Linear(64 + 16, 64),
+            nn.ReLU(),
+            nn.Linear(64, out_features)
+        )
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.4)
+        self.dropout2 = nn.Dropout(0.2)
+
+    def forward(self, image, tabular):
+        x = self.base_model(image)
+        x = self.gap(x)
+        x = x.view(x.size(0), -1)
+        x = self.relu(self.fc1(x))
+        attn = self.attention(x)
+        x = x * attn  # MVSA: attention multiplicative
+        x = self.dropout(x)
+        x = self.relu(self.fc2(x))
+        x = self.dropout2(x)
+        # Branche tabulaire
+        x_tab = self.tabular(tabular)
+        if x_tab.dim() > 2:
+            x_tab = x_tab.view(x_tab.size(0), -1)
+        # Fusion
+        x = torch.cat([x, x_tab], dim=1)
+        x = self.classifier(x)
+        return x.squeeze(-1) if x.shape[-1] == 1 else x
