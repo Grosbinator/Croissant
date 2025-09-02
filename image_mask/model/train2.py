@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-from cnn import LateFusionModel
+from image_mask.model.LateFusionLightning import LateFusionModel
 import torchvision.models as models
 import pytorch_lightning as L
 from dataloader import MaskDataset, get_dataloaders, show_accuracy_img_sph, count_errors_by_class
-from cnn import LateFusionLightning  
+from image_mask.model.LateFusionLightning import LateFusionLightning  
 import pandas as pd
 
 def train(model, train_loader, val_loader, optimizer, criterion, device, num_epochs=10, save_path="best_model.pth"):
