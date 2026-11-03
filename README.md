@@ -1,68 +1,86 @@
-
 # Croissant
 
-Breast cancer ultrasound image classification using PyTorch Lightning.
+**Breast cancer detection on ultrasound images with deep learning (PyTorch Lightning).**
 
-This project aims to classify breast ultrasound images to detect cancer, using various deep learning models and a modular structure based on PyTorch Lightning. The main dataset is the [Breast Ultrasound Images Dataset](https://www.kaggle.com/datasets/aryashah2k/breast-ultrasound-images-dataset) from Kaggle.
+Croissant classifies breast ultrasound images as **malignant** or **benign**. It was built during a 5-month research internship at the [Pontificia Universidad Católica del Perú](https://www.pucp.edu.pe/) (Lima, May–Sep 2025), as part of a project on AI techniques applied to ultrasound data.
 
-## Installation
+The project benchmarks several CNN architectures and loss functions, and explores segmentation and late fusion of image and lesion mask.
+
+Dataset: [Breast Ultrasound Images Dataset](https://www.kaggle.com/datasets/aryashah2k/breast-ultrasound-images-dataset) (Kaggle).
+
+## Results
+
+Best model: **DenseNet + Binary Cross-Entropy**, image only (no tabular data), on a held-out test set of 263 images.
+
+| Metric | Score |
+|---|---|
+| Accuracy | **97.0 %** |
+| Sensitivity (recall, malignant) | **97.7 %** |
+| Specificity | **96.2 %** |
+| Test loss | 0.2 |
+
+<p align="center">
+  <img src="assets/confusion_matrix.png" alt="Confusion matrix of the best model" width="420">
+</p>
+
+Only 3 malignant cases out of 132 were missed (false negatives), which is the error that matters most in a screening context.
+
+## Approach
+
+- **Models compared:** ResNet, ResNet-101, MobileNet, Inception, VGG16, DenseNet and an MVSA-DenseNet variant, with pre-trained weights and fine-tuning.
+- **Losses compared:** cross-entropy (with class weights and label smoothing), binary cross-entropy, focal loss, BCE + Dice for segmentation.
+- **Training:** AdamW (lr = 1e-4), batch size 16, `ReduceLROnPlateau` scheduler, early stopping on validation loss, up to 50 epochs.
+- **Metrics:** accuracy, recall and specificity logged at each epoch for train / validation / test, plus a confusion matrix on the test set.
+- **Segmentation & fusion** (`image_mask/`): lesion masks, data augmentation and a late-fusion model combining image and mask branches.
+
+## Quick start
 
 ```bash
 pip install -r requirements.txt
+cd only_pic_lightning/train
+python train_light_D_CE.py
 ```
 
-## Training
+Logs and checkpoints are written to `lightning_logs_densenet_CE/`.
 
-Example to train the main model (DenseNet + CrossEntropy):
-```bash
-python only_pic_lightning/train/train_lightning_D_CE.py
+## Project structure
+
+```
+Croissant/
+├── only_pic_lightning/      # Main classification pipeline (recommended)
+│   ├── dataframe.py             # Builds the image / label DataFrame
+│   ├── dataframe_transform.py   # Preprocessing and augmentations
+│   └── train/
+│       ├── train_light_D_CE.py  # Main training script (DenseNet + BCE)
+│       ├── model_lightning.py   # LightningModules (binary, multiclass, patient-level)
+│       ├── models.py            # Architectures (ResNet, MobileNet, DenseNet, VGG…)
+│       ├── loss.py              # Loss functions
+│       ├── dataloader.py        # Train / val / test loaders
+│       └── confusion_matrix.py  # Confusion matrix plot
+├── image_mask/              # Segmentation and late fusion
+│   ├── dataframe/               # Mask DataFrames, normalization coefficients, augmentation
+│   ├── dataset/organizing.ipynb # Dataset organization
+│   └── model/
+│       ├── train_3.py           # Segmentation training script (recommended version)
+│       ├── LateFusionLightning.py, LF_models.py  # Late fusion model
+│       └── dataloader.py, loss.py
+├── only_pic/                # First experiments (plain PyTorch)
+├── pyra/                    # Exploratory scripts
+├── General/                 # Work in progress: unified models and losses
+└── requirements.txt
 ```
 
-## Project Structure
+## Tech stack
 
-- `only_pic/` : Initial experiments and basic scripts
-	- `dataframe.py` : Dataset DataFrame creation and management
-	- `train/` :
-		- `dataloader.py` : DataLoader for images and labels
-		- `train.py`, `train_lightning.py` : Training scripts
-- `only_pic_lightning/` : More modular and recommended Lightning version
-	- `dataframe.py`, `dataframe_transform.py` : Advanced DataFrame and transformation management
-	- `train/` :
-		- `train_light_D_CE.py` : Main training script (DenseNet + CrossEntropy)
-		- `model_lightning.py` : Lightning model definitions (binary, multiclass, patient-level)
-		- `models.py` : Network architectures (ResNet, MobileNet, DenseNet, etc.)
-		- `loss.py` : Custom loss functions
-		- `dataloader.py` : DataLoaders for Lightning
-		- `confusion_matrix.py` : Confusion matrix generation and display
+Python · PyTorch · PyTorch Lightning · torchvision · torchmetrics · scikit-learn · pandas · matplotlib / seaborn
 
-- `image_mask/` : **Modules for image segmentation and masking**
-	- `dataframe/` : DataFrame scripts for segmentation
-		- [`cal_coeff.py`](image_mask/dataframe/cal_coeff.py) : Calculates calibration coefficients for image normalization.
-		- [`dataframe_sph.py`](image_mask/dataframe/dataframe_sph.py) : Builds DataFrames for spherical mask datasets.
-		- [`dataframe_sph_augmented.py`](image_mask/dataframe/dataframe_sph_augmented.py) : DataFrame creation with data augmentation for spherical masks.
-	- `dataset/` : Data organization notebooks
-		- [`organizing.ipynb`](image_mask/dataset/organizing.ipynb) : Jupyter notebook for organizing and preprocessing segmentation datasets.
-	- `model/` : Segmentation models and training scripts
-		- [`dataloader.py`](image_mask/model/dataloader.py) : DataLoader for segmentation images and masks.
-		- [`LateFusionLightning.py`](image_mask/model/LateFusionLightning.py) : PyTorch Lightning model for late fusion segmentation.
-		- [`LF_models.py`](image_mask/model/LF_models.py) : Contains late fusion model architectures.
-		- [`loss.py`](image_mask/model/loss.py) : Custom loss functions for segmentation tasks.
-		- [`only_pic.py`](image_mask/model/only_pic.py) : Segmentation script using only image data.
-		- [`oui.ipynb`](image_mask/model/oui.ipynb) : Notebook for segmentation experiments and visualization.
-		- [`train.py`](image_mask/model/train.py) : Main training script for segmentation models.
-		- [`train2.py`](image_mask/model/train2.py) : Alternative training script for segmentation.
-		- [`train_3.py`](image_mask/model/train_3.py) : Third version of segmentation training script. You can forget the others this one working fine and is easy to use.
-- `General/` : Attempt to gather all models and losses in one place. (Note: Due to lack of time, this module is not fully(at all(sry Gab)) functional.)
-- `pyra/` : Alternative experimental scripts
-- `requirements.txt` : Python dependencies
+## Limitations and next steps
 
-## Main Features
-
-- Binary and multiclass classification
-- Advanced metrics (accuracy, recall, specificity, confusion matrix)
-- Early stopping and learning rate scheduler
-- Modular architectures and loss functions
+- Results come from a single train / validation / test split on a public dataset of limited size. Cross-validation and an external test set would give a more robust estimate.
+- Add Grad-CAM visualizations to show which regions drive the predictions.
+- Finish the `General/` module to run every model and loss from one configurable entry point.
 
 ## Author
 
-Grosbinator
+**Robin Philis** — Data Scientist, Computer Vision & AI for healthcare
+[LinkedIn](https://www.linkedin.com/in/robin-philis/) · [GitHub](https://github.com/Grosbinator)

@@ -5,3 +5,7 @@ torchvision
 torchmetrics
 p-utils
 p-structures
+pandas
+scikit-learn
+matplotlib
+seaborn
